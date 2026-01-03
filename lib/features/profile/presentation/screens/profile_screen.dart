@@ -185,6 +185,7 @@ class ProfileScreen extends ConsumerWidget {
                     icon: Icons.person_outline_outlined,
                     label: "Joined At",
                     subLabel: user?.joinedAt != null ? DateFormat('dd MMM yyyy, hh:mm a').format(user!.joinedAt.toLocal()) : null,
+                    showChevron: false,
                     onTap: () {},
                   )
                 ],

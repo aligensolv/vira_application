@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vira/features/auth/application/auth_controller.dart';
 import 'package:vira/features/home/presentation/widgets/place_search_delegate.dart';
 import 'package:vira/features/places/application/place_provider.dart';
+import 'package:vira/features/places/application/places_realtime_provider.dart';
 import 'package:vira/features/places/presentation/screens/place_details_screen.dart';
 import 'package:vira/features/region/application/region_provider.dart';
 import '../../../../core/config/app_colors.dart';
@@ -20,6 +21,8 @@ class HomeScreen extends ConsumerWidget {
 
     final regionsAsync = ref.watch(regionsProvider);
     final placesAsync = ref.watch(placesProvider);
+
+    ref.watch(placesRealtimeProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,

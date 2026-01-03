@@ -48,15 +48,15 @@ class PlaceCard extends StatelessWidget {
                     fontSize: 16,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  (place.region?.name ?? 'unknown').toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
+                // const SizedBox(height: 4),
+                // Text(
+                //   (place.region?.name ?? 'unknown').toUpperCase(),
+                //   style: TextStyle(
+                //     fontSize: 10,
+                //     fontWeight: FontWeight.bold,
+                //     color: AppColors.primary,
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -133,7 +133,7 @@ class PlaceCard extends StatelessWidget {
                             textBaseline: TextBaseline.alphabetic,
                             children: [
                               Text(
-                                "\$${10 + place.id}",
+                                "\$${place.pricePerHour}",
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w900,
@@ -143,7 +143,7 @@ class PlaceCard extends StatelessWidget {
                               const Text(
                                 "/hr",
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 12,
                                   color: AppColors.textSecondary,
                                 ),
                               ),

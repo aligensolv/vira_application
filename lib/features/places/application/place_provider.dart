@@ -12,10 +12,36 @@ final placeRepositoryProvider = Provider<PlaceRepository>((ref) {
 });
 
 // 2. Fetch All Places (e.g. for "Nearby" in Home)
-final placesProvider = FutureProvider<List<Place>>((ref) async {
-  final repo = ref.watch(placeRepositoryProvider);
-  return await repo.getPlaces();
-});
+final placesProvider =
+    AsyncNotifierProvider<PlacesNotifier, List<Place>>(
+  PlacesNotifier.new,
+);
+
+class PlacesNotifier extends AsyncNotifier<List<Place>> {
+  @override
+  Future<List<Place>> build() async {
+    final repo = ref.watch(placeRepositoryProvider);
+    return repo.getPlaces(); // HTTP first load
+  }
+
+  void upsert(Place place) {
+    state = state.whenData((list) {
+      final index = list.indexWhere((p) => p.id == place.id);
+      if (index == -1) {
+        return [...list, place];
+      }
+      final updated = [...list];
+      updated[index] = place;
+      return updated;
+    });
+  }
+
+  void remove(int placeId) {
+    state = state.whenData(
+      (list) => list.where((p) => p.id != placeId).toList(),
+    );
+  }
+}
 
 // 3. Fetch Places by Region (Family Provider)
 // Usage: ref.watch(placesByRegionProvider(regionId))

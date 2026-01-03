@@ -17,10 +17,36 @@ final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
 });
 
 // 3. User Bookings List (Future Provider for the Bookings Screen)
-final myBookingsProvider = FutureProvider.autoDispose<List<Booking>>((ref) async {
-  final repo = ref.watch(bookingRepositoryProvider);
-  return await repo.getMyBookings();
-});
+final myBookingsProvider =
+    AsyncNotifierProvider<MyBookingsNotifier, List<Booking>>(
+  MyBookingsNotifier.new,
+);
+
+class MyBookingsNotifier extends AsyncNotifier<List<Booking>> {
+  @override
+  Future<List<Booking>> build() async {
+    final repo = ref.watch(bookingRepositoryProvider);
+    return repo.getMyBookings(); // initial load
+  }
+
+  void upsert(Booking booking) {
+    state = state.whenData((list) {
+      final index = list.indexWhere((b) => b.id == booking.id);
+      if (index == -1) {
+        return [...list, booking];
+      }
+      final updated = [...list];
+      updated[index] = booking;
+      return updated;
+    });
+  }
+
+  void remove(int bookingId) {
+    state = state.whenData(
+      (list) => list.where((b) => b.id != bookingId).toList(),
+    );
+  }
+}
 
 final selectedBookingProvider = Provider<Booking?>((ref) => null);
 
