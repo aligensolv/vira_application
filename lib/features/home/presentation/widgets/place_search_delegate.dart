@@ -106,7 +106,7 @@ class PlaceSearchDelegate extends SearchDelegate {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => PlaceDetailsScreen(place: place),
+                            builder: (_) => PlaceDetailsScreen(placeId: place.id),
                           ),
                         );
                       },

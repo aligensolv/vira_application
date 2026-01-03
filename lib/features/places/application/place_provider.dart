@@ -23,3 +23,11 @@ final placesByRegionProvider = FutureProvider.family<List<Place>, int>((ref, reg
   final repo = ref.watch(placeRepositoryProvider);
   return await repo.getPlaces(regionId: regionId);
 });
+
+
+final selectedPlaceProvider = Provider<Place?>((ref) => null);
+
+final placeByIdProvider = Provider.family<Place?, int>((ref, id) {
+  final places = ref.watch(placesProvider);
+  return places.value?.firstWhere((p) => p.id == id);
+});

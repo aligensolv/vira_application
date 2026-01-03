@@ -1,6 +1,5 @@
 // import 'package:flutter/material.dart';
 // import 'package:vira/core/config/app_theme.dart';
-// import 'package:vira/core/widgets/ui/button.dart';
 
 // class AppDialog extends StatelessWidget {
 //   final String title;

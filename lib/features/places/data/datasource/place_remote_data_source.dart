@@ -12,7 +12,6 @@ class PlaceRemoteDataSource {
           regionId != null ? {'region_id': regionId} : null;
 
       final response = await _client.get('/places/active', queryParameters: queryParams);
-      // Assuming API returns { "data": [...] }
       return response.data['data']; 
     } catch (e) {
       rethrow;

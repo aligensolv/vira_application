@@ -15,16 +15,15 @@ class BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isUpcoming = booking.status == BookingStatus.confirmed || 
-                       booking.status == BookingStatus.pending;
+    final isActive = booking.status == BookingStatus.active;
 
     return AppCard(
       padding: EdgeInsets.zero,
       onTap: onTap,
-      // border: Border.all(
-      //   color: isUpcoming ? AppColors.secondary : AppColors.border, 
-      //   width: isUpcoming ? 1.5 : 1
-      // ),
+      border: Border.all(
+        color: isActive ? AppColors.primary : AppColors.border, 
+        width: isActive ? 2 : 1
+      ),
       child: Column(
         children: [
           // 1. MAIN BODY
@@ -90,7 +89,7 @@ class BookingCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        booking.placeName,
+                        booking.place.name,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -130,7 +129,7 @@ class BookingCard extends StatelessWidget {
                     const Icon(Icons.location_on, size: 14, color: AppColors.textSecondary),
                     const SizedBox(width: 4),
                     Text(
-                      booking.region.toUpperCase(),
+                      (booking.place.region?.name ?? 'unknown').toUpperCase(),
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,

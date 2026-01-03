@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:vira/shared/providers/api_client.dart';
-import '../../../../core/network/api_client.dart';
+import 'package:vira/features/booking/application/booking_provider.dart';
 import '../../places/data/models/place.dart';
+import '../data/repositories/booking_repository.dart';
 
-// --- STATE MODEL ---
+enum BookingStartType { now, later }
+
 class BookingDraftState {
+  final BookingStartType startType;
   final DateTime startTime;
   final int durationMinutes;
   final double pricePerHour;
@@ -13,9 +15,9 @@ class BookingDraftState {
     required this.startTime,
     required this.durationMinutes,
     required this.pricePerHour,
+    this.startType = BookingStartType.now
   });
 
-  // Business Rule: Price = ceil(hours) * rate
   double get estimatedPrice {
     final hours = (durationMinutes / 60).ceil();
     return hours * pricePerHour;
@@ -25,23 +27,28 @@ class BookingDraftState {
 
   BookingDraftState copyWith({
     DateTime? startTime,
+    BookingStartType? type,
     int? durationMinutes,
   }) {
     return BookingDraftState(
       startTime: startTime ?? this.startTime,
       durationMinutes: durationMinutes ?? this.durationMinutes,
-      pricePerHour: this.pricePerHour,
+      pricePerHour: pricePerHour,
+      startType: type ?? startType
     );
   }
 }
 
 // --- CONTROLLER ---
 class BookingController extends StateNotifier<BookingDraftState> {
-  final ApiClient _apiClient;
+  final BookingRepository _repository; // Changed from ApiClient
 
-  BookingController(this._apiClient, double pricePerHour, int minDuration) 
-      : super(BookingDraftState(
-          startTime: DateTime.now(), // Default: Now
+  BookingController(
+    this._repository, 
+    double pricePerHour, 
+    int minDuration
+  ) : super(BookingDraftState(
+          startTime: DateTime.now(),
           durationMinutes: minDuration,
           pricePerHour: pricePerHour,
         ));
@@ -50,48 +57,62 @@ class BookingController extends StateNotifier<BookingDraftState> {
     state = state.copyWith(startTime: time);
   }
 
+  void setStartType(BookingStartType type) {
+    state = state.copyWith(
+      type: type
+    );
+  }
+
   void setDuration(int minutes) {
     state = state.copyWith(durationMinutes: minutes);
   }
 
-  Future<void> submitBooking(int placeId) async {
-    try {
-      // API Call
-      await _apiClient.post('/bookings', data: {
-        'place_id': placeId,
-        'start_time': state.startTime.toIso8601String(),
-        'duration_minutes': state.durationMinutes,
-      });
-    } catch (e) {
-      rethrow;
-    }
-  }
-
   void incrementDuration() {
-    // Step: 15 minutes
     final newDuration = state.durationMinutes + 15;
-    // Cap at 24 hours (1440 min) or simpler logic
     if (newDuration <= 1440) {
       state = state.copyWith(durationMinutes: newDuration);
     }
   }
 
   void decrementDuration(int minDuration) {
-    // Step: 15 minutes, but don't go below place minimum
     final newDuration = state.durationMinutes - 15;
     if (newDuration >= minDuration) {
       state = state.copyWith(durationMinutes: newDuration);
     }
   }
+
+  // Submit Booking (Called from Checkout Screen)
+  Future<void> submitBooking(int placeId) async {
+    try {
+      await _repository.createBooking(
+        placeId: placeId,
+        startTime: state.startTime,
+        durationMinutes: state.durationMinutes
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Cancel booking (called from Booking details screen)
+  Future<void> cancelBooking(int bookingId) async {
+    try {
+      await _repository.cancelBooking(bookingId);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 
 // --- PROVIDER ---
-// We use .family to initialize it with specific Place data
 final bookingControllerProvider = StateNotifierProvider.autoDispose
     .family<BookingController, BookingDraftState, Place>((ref, place) {
-  final client = ref.watch(apiClientProvider);
+  
+  // Inject Repository instead of ApiClient
+  final repository = ref.watch(bookingRepositoryProvider);
+  
   return BookingController(
-    client, 
+    repository, 
     place.pricePerHour, 
     place.minDurationMinutes
   );

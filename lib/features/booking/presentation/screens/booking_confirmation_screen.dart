@@ -1,5 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:vira/core/utils/error_handler.dart';
+import 'package:vira/core/utils/logger.dart';
 import 'package:vira/features/booking/application/booking_control.dart';
 import 'package:vira/features/places/data/models/place.dart';
 import '../../../../core/config/app_colors.dart';
@@ -18,10 +22,9 @@ class BookingConfirmationScreen extends ConsumerStatefulWidget {
 }
 
 class _BookingConfirmationScreenState extends ConsumerState<BookingConfirmationScreen> {
-  int _selectedMethod = 0; // 0: Card, 1: Apple Pay, 2: Google Pay
+  int _selectedMethod = 0;
 
   void _handlePayPress() {
-    // Open the Credit Card Input Sheet
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -31,7 +34,84 @@ class _BookingConfirmationScreenState extends ConsumerState<BookingConfirmationS
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: _PaymentDetailsSheet(
           amount: widget.bookingState.estimatedPrice,
-          onPaymentSuccess: _onPaymentSuccess,
+          paymentMethodIndex: _selectedMethod,
+          onConfirmPayment: (details) async {
+            _processBooking(details);
+          }, // Pass Details
+        ),
+      ),
+    );
+  }
+
+  void _processBooking(String paymentDetails) async {
+    try {
+      // 2. Call Controller
+      final controller = ref.read(bookingControllerProvider(widget.place).notifier);
+      
+      await controller.submitBooking(widget.place.id);
+      
+      if (mounted) {
+        Navigator.pop(context); // Close Sheet
+        _showSuccessDialog();
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close Sheet (optional, or show error in sheet)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(DioErrorUtil.getErrorMessage(e as DioException)), backgroundColor: AppColors.destructive),
+        );
+      }
+    }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.success.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check, color: AppColors.success, size: 40),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              "Booking Confirmed!",
+              style: TextStyle(
+                fontSize: 20, 
+                fontWeight: FontWeight.w900, 
+                color: AppColors.secondary,
+                letterSpacing: -0.5
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Your spot has been reserved.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            ),
+            const SizedBox(height: 32),
+            AppButton(
+              text: "GO TO HOME",
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MainLayoutScreen()),
+                  (route) => false,
+                );
+              },
+            )
+          ],
         ),
       ),
     );
@@ -153,9 +233,9 @@ class _BookingConfirmationScreenState extends ConsumerState<BookingConfirmationS
                           children: [
                             _TicketField("START", "${state.startTime.hour}:${state.startTime.minute.toString().padLeft(2, '0')}"),
                             const Icon(Icons.arrow_forward, color: Colors.white24, size: 16),
-                            _TicketField("DURATION", "${state.durationMinutes}m"),
+                            _TicketField("DURATION", "${state.durationMinutes}M"),
                             const Icon(Icons.arrow_forward, color: Colors.white24, size: 16),
-                            _TicketField("RATE", "\$${state.pricePerHour.toStringAsFixed(0)}/hr"),
+                            _TicketField("END", "${state.startTime.add(state.durationMinutes.minutes).hour}:${state.startTime.add(state.durationMinutes.minutes).minute.toString().padLeft(2, '0')}"),
                           ],
                         ),
                         
@@ -178,7 +258,7 @@ class _BookingConfirmationScreenState extends ConsumerState<BookingConfirmationS
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text("TOTAL DUE", style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold)),
+                            Text("${state.pricePerHour}\$ / HOUR", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                             Text(
                               "\$${state.estimatedPrice.toStringAsFixed(2)}", 
                               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 24, color: AppColors.primary, height: 1.0)
@@ -277,9 +357,14 @@ class _BookingConfirmationScreenState extends ConsumerState<BookingConfirmationS
 
 class _PaymentDetailsSheet extends StatefulWidget {
   final double amount;
-  final VoidCallback onPaymentSuccess;
+  final int paymentMethodIndex;
+  final Future<void> Function(String details) onConfirmPayment; // Returns Future for loading state
 
-  const _PaymentDetailsSheet({required this.amount, required this.onPaymentSuccess});
+  const _PaymentDetailsSheet({
+    required this.amount, 
+    required this.paymentMethodIndex, 
+    required this.onConfirmPayment
+  });
 
   @override
   State<_PaymentDetailsSheet> createState() => _PaymentDetailsSheetState();
@@ -287,14 +372,20 @@ class _PaymentDetailsSheet extends StatefulWidget {
 
 class _PaymentDetailsSheetState extends State<_PaymentDetailsSheet> {
   bool _isProcessing = false;
+  final _cardNumberCtrl = TextEditingController();
 
-  void _processPayment() async {
+  void _submit() async {
     setState(() => _isProcessing = true);
-    // Simulate Network Delay
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      widget.onPaymentSuccess();
-    }
+    
+    // Simulate data gathering (e.g. Stripe Token)
+    final details = widget.paymentMethodIndex == 0 
+        ? "Card ending in ${_cardNumberCtrl.text.isEmpty ? '0000' : _cardNumberCtrl.text.substring(_cardNumberCtrl.text.length - 4)}" 
+        : "Wallet Token";
+
+    // Call Parent Logic (API)
+    await widget.onConfirmPayment(details);
+    
+    if (mounted) setState(() => _isProcessing = false);
   }
 
   @override
@@ -305,32 +396,44 @@ class _PaymentDetailsSheetState extends State<_PaymentDetailsSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              color: Colors.grey[300],
+            ),
+          ),
+          const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("ENTER CARD DETAILS", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.0)),
+              const Text("ENTER DETAILS", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.textSecondary, letterSpacing: 1.0)),
               IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))
             ],
           ),
           const SizedBox(height: 20),
-          const AppInput(hintText: "Card Number", prefixIcon: Icons.credit_card),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              const Expanded(child: AppInput(hintText: "MM/YY", prefixIcon: Icons.calendar_today)),
-              const SizedBox(width: 16),
-              Expanded(child: AppInput(hintText: "CVV", prefixIcon: Icons.lock_outline)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const AppInput(hintText: "Cardholder Name", prefixIcon: Icons.person_outline),
+          
+          if (widget.paymentMethodIndex == 0) ...[
+            AppInput(hintText: "Card Number", prefixIcon: Icons.credit_card, controller: _cardNumberCtrl),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: AppInput(hintText: "MM/YY", prefixIcon: Icons.calendar_today)),
+                const SizedBox(width: 16),
+                Expanded(child: AppInput(hintText: "CVV", prefixIcon: Icons.lock_outline)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const AppInput(hintText: "Cardholder Name", prefixIcon: Icons.person_outline),
+          ] else 
+            const Center(child: Text("Wallet Payment Flow Placeholder", style: TextStyle(color: Colors.grey))),
           
           const SizedBox(height: 32),
           
           AppButton(
-            text: "CONFIRM PAYMENT",
+            text: "PAY \$${widget.amount.toStringAsFixed(2)}",
             isLoading: _isProcessing,
-            onPressed: _processPayment,
+            onPressed: _submit,
           ),
           const SizedBox(height: 16),
         ],
@@ -376,7 +479,7 @@ class _MethodCard extends StatelessWidget {
         height: 80,
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : AppColors.background,
-          border: Border.all(color: isSelected ? AppColors.secondary : AppColors.border, width: isSelected ? 2 : 1),
+          border: Border.all(color: isSelected ? AppColors.secondary : AppColors.secondary.withOpacity(0.2), width: isSelected ? 2 : 1),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

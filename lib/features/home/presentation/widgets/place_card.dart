@@ -50,11 +50,11 @@ class PlaceCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  place.region?.name ?? 'unknown',
+                  (place.region?.name ?? 'unknown').toUpperCase(),
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textSecondary.withOpacity(0.6),
+                    color: AppColors.primary,
                   ),
                 ),
               ],

@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:vira/features/layout/application/layout_provider.dart';
 import '../../../../core/config/app_colors.dart';
 
-class CustomBottomNav extends StatelessWidget {
-  final int currentIndex;
+class CustomBottomNav extends ConsumerWidget {
   final Function(int) onTap;
 
   const CustomBottomNav({
-    super.key,
-    required this.currentIndex,
+    super.key, 
     required this.onTap,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentIndex = ref.watch(bottomNavIndexProvider);
+
     return Container(
       height: 84, // Slightly taller for better touch targets
       decoration: BoxDecoration(

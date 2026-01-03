@@ -8,7 +8,7 @@ class RegionRemoteDataSource {
   Future<List<dynamic>> getRegions() async {
     try {
       final response = await _client.get('regions');
-      return response.data['data']; 
+      return response.data; 
     } catch (e) {
       rethrow;
     }

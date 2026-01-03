@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:vira/core/realtime/socket.dart';
 import 'package:vira/core/services/cache_service.dart';
 import 'package:vira/features/intro/presentation/screens/splash_screen.dart';
 import 'core/config/app_constants.dart';
@@ -8,6 +9,7 @@ import 'core/config/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await CacheService.init();
+  await SocketManager.initialize();
   
   runApp(
     ProviderScope(

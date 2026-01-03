@@ -19,7 +19,7 @@ class WelcomeScreen extends StatelessWidget {
               // In real app, use NetworkImage or AssetImage here
               // For now, a placeholder with a nice color
               // child: const Icon(
-              //   Icons.apartment_rounded, 
+              //   Icons.local_parking_rounded, 
               //   size: 400, 
               //   color: Colors.white10,
               // ),
@@ -34,8 +34,8 @@ class WelcomeScreen extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    AppColors.secondary.withOpacity(0.3),
-                    AppColors.secondary.withOpacity(0.9),
+                    AppColors.secondary.withValues(alpha: 0.3),
+                    AppColors.secondary.withValues(alpha: 0.9),
                     AppColors.secondary,
                   ],
                 ),
@@ -84,7 +84,7 @@ class WelcomeScreen extends StatelessWidget {
 
                   // Big Headline
                   const Text(
-                    "Find your\nperfect space.",
+                    "Find your\nparking spot.",
                     style: TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.w900,
@@ -95,10 +95,10 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    "Book meeting rooms, desk spaces, and private offices instantly.",
+                    "Book parking spaces instantly and never waste time searching again.",
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       height: 1.5,
                     ),
                   ),
@@ -119,8 +119,7 @@ class WelcomeScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   AppButton(
                     text: "Sign In".toUpperCase(),
-                    type: ButtonType.accent, // White outline style needs adjustment in AppButton
-                    // Or we create a specific style for this dark background
+                    type: ButtonType.accent,
                     onPressed: () {
                       Navigator.push(
                         context,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Required for Haptics
 import '../../config/app_colors.dart';
 
-enum ButtonType { primary, secondary, outline, ghost, accent }
+enum ButtonType { primary, secondary, outline, ghost, accent, destructive, destructiveOutline }
 
 class AppButton extends StatefulWidget {
   final String text;
@@ -154,20 +154,31 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
         overlay = Colors.white.withOpacity(0.1);
         break;
       case ButtonType.accent:
-        bg = Colors.white;
-        fg = Colors.black;
+        bg = AppColors.accent;
+        fg = AppColors.accentForeground;
         overlay = Colors.black.withOpacity(0.1);
         break;
       case ButtonType.outline:
-        bg = Colors.transparent;
+        bg = AppColors.secondary.withOpacity(0.1);
         fg = AppColors.secondary;
-        side = const BorderSide(color: AppColors.border, width: 1.5); // Thicker border
+        side = const BorderSide(color: AppColors.secondary, width: 1.5); // Thicker border
         overlay = AppColors.secondary.withOpacity(0.1);
         break;
       case ButtonType.ghost:
         bg = Colors.transparent;
         fg = AppColors.secondary;
         overlay = AppColors.secondary.withOpacity(0.1);
+        break;
+      case ButtonType.destructive:
+        bg = Colors.transparent;
+        fg = AppColors.secondary;
+        overlay = AppColors.secondary.withOpacity(0.1);
+        break;
+      case ButtonType.destructiveOutline:
+        bg = AppColors.destructive.withOpacity(0.1);
+        fg = AppColors.destructive;
+        side = const BorderSide(color: AppColors.destructive, width: 1.5); // Thicker border
+        overlay = AppColors.destructive.withOpacity(0.1);
         break;
     }
 

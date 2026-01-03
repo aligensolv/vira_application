@@ -27,7 +27,6 @@ class MainLayoutScreen extends ConsumerWidget {
         children: screens,
       ),
       bottomNavigationBar: CustomBottomNav(
-        currentIndex: currentIndex,
         onTap: (index) {
           ref.read(bottomNavIndexProvider.notifier).state = index;
         },

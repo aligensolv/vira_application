@@ -7,7 +7,7 @@ class AuthRemoteDataSource {
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
-      final response = await _client.post('users/login', data: {
+      final response = await _client.post('auth/login', data: {
         'email': email,
         'password': password,
       });
@@ -19,7 +19,7 @@ class AuthRemoteDataSource {
 
   Future<Map<String, dynamic>> register(String name, String email, String password) async {
     try {
-      final response = await _client.post('users/register', data: {
+      final response = await _client.post('auth/register', data: {
         'name': name,
         'email': email,
         'password': password,

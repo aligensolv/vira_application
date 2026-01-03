@@ -1,77 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:vira/features/booking/application/booking_provider.dart';
 import 'package:vira/features/booking/data/models/booking.dart';
 import 'package:vira/features/booking/presentation/screens/booking_details_screen.dart';
+import 'package:vira/features/layout/application/layout_provider.dart';
 import '../../../../core/config/app_colors.dart';
 import '../../../../core/widgets/ui/app_button.dart';
 import '../widgets/booking_card.dart';
 
-class BookingsScreen extends StatefulWidget {
+class BookingsScreen extends ConsumerStatefulWidget {
   const BookingsScreen({super.key});
 
   @override
-  State<BookingsScreen> createState() => _BookingsScreenState();
+  ConsumerState<BookingsScreen> createState() => _BookingsScreenState();
 }
 
-class _BookingsScreenState extends State<BookingsScreen> {
-  int _tabIndex = 0; // 0 = Upcoming, 1 = History
+class _BookingsScreenState extends ConsumerState<BookingsScreen> {
+  // 0 = Current, 1 = Completed, 2 = Cancelled
+  int _tabIndex = 0; 
 
   @override
   Widget build(BuildContext context) {
-    // Mock Data
-    final upcomingList = [
-      Booking(
-        id: 101,
-        placeName: "Central Garage - A12",
-        region: "Downtown",
-        startTime: DateTime.now().add(const Duration(hours: 1)),
-        endTime: DateTime.now().add(const Duration(hours: 3)),
-        totalPrice: 20.00,
-        status: BookingStatus.confirmed,
-      ),
-      Booking(
-        id: 102,
-        placeName: "Plaza Parking #4",
-        region: "Maadi",
-        startTime: DateTime.now().add(const Duration(days: 2)),
-        endTime: DateTime.now().add(const Duration(days: 2, hours: 2)),
-        totalPrice: 40.00,
-        status: BookingStatus.pending,
-      ),
-    ];
+    final bookingsAsync = ref.watch(myBookingsProvider);
 
-    final historyList = [
-      Booking(
-        id: 88,
-        placeName: "Zamalek Tower",
-        region: "Zamalek",
-        startTime: DateTime.now().subtract(const Duration(days: 5)),
-        endTime: DateTime.now().subtract(const Duration(days: 5, hours: 2)),
-        totalPrice: 50.00,
-        status: BookingStatus.completed,
-      ),
-      Booking(
-        id: 85,
-        placeName: "Nasr City Hub",
-        region: "Nasr City",
-        startTime: DateTime.now().subtract(const Duration(days: 10)),
-        endTime: DateTime.now().subtract(const Duration(days: 10, hours: 1)),
-        totalPrice: 15.00,
-        status: BookingStatus.cancelled,
-      ),
-    ];
-
-    final currentList = _tabIndex == 0 ? upcomingList : historyList;
+    
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          "MY BOOKINGS",
-        ),
+        title: const Text("MY BOOKINGS"),
       ),
       body: Column(
         children: [
-          // 1. Custom Tabs
+          // 1. Custom Tabs (3 Tabs)
           Container(
             margin: const EdgeInsets.all(20),
             padding: const EdgeInsets.all(4),
@@ -81,17 +42,92 @@ class _BookingsScreenState extends State<BookingsScreen> {
             ),
             child: Row(
               children: [
-                Expanded(child: _TabButton(label: "Upcoming", isSelected: _tabIndex == 0, onTap: () => setState(() => _tabIndex = 0))),
-                Expanded(child: _TabButton(label: "History", isSelected: _tabIndex == 1, onTap: () => setState(() => _tabIndex = 1))),
+                Expanded(
+                  child: _TabButton(
+                    label: "Current", 
+                    isSelected: _tabIndex == 0, 
+                    onTap: () => setState(() => _tabIndex = 0),
+                  ),
+                ),
+                Expanded(
+                  child: _TabButton(
+                    label: "Completed", 
+                    isSelected: _tabIndex == 1, 
+                    onTap: () => setState(() => _tabIndex = 1),
+                  ),
+                ),
+                Expanded(
+                  child: _TabButton(
+                    label: "Cancelled", 
+                    isSelected: _tabIndex == 2, 
+                    onTap: () => setState(() => _tabIndex = 2),
+                  ),
+                ),
               ],
             ),
           ),
 
-          // 2. List
+          // 2. Data List
           Expanded(
-            child: currentList.isEmpty
-                ? _buildEmptyState()
-                : ListView.separated(
+            child: bookingsAsync.when(
+              // LOADING
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: AppColors.secondary),
+              ),
+              
+              // ERROR
+              error: (err, stack) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: AppColors.destructive),
+                    const SizedBox(height: 16),
+                    // Text(err.toString()), // Debug only
+                    const Text(
+                      "Failed to load bookings",
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                    TextButton(
+                      onPressed: () => ref.refresh(myBookingsProvider),
+                      child: const Text("Retry", style: TextStyle(color: AppColors.primary)),
+                    )
+                  ],
+                ),
+              ),
+
+              // SUCCESS
+              data: (allBookings) {
+                // Filter Logic based on Tab Index
+                List<Booking> currentList;
+
+                if (_tabIndex == 0) {
+                  // Current: Initial + Active
+                  currentList = allBookings.where((b) => 
+                    b.status == BookingStatus.active || 
+                    b.status == BookingStatus.initial
+                  ).toList();
+                } else if (_tabIndex == 1) {
+                  // Completed
+                  currentList = allBookings.where((b) => 
+                    b.status == BookingStatus.completed
+                  ).toList();
+                } else {
+                  // Cancelled
+                  currentList = allBookings.where((b) => 
+                    b.status == BookingStatus.cancelled
+                  ).toList();
+                }
+
+                // Empty State
+                if (currentList.isEmpty) {
+                  return _buildEmptyState();
+                }
+
+                // List View
+                return RefreshIndicator(
+                  onRefresh: () async => ref.refresh(myBookingsProvider),
+                  color: AppColors.secondary,
+                  child: ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                     itemCount: currentList.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 16),
@@ -102,13 +138,16 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => BookingDetailsScreen(booking: currentList[index]),
+                              builder: (_) => BookingDetailsScreen(id: currentList[index].id),
                             ),
                           );
                         },
                       );
                     },
                   ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -116,15 +155,23 @@ class _BookingsScreenState extends State<BookingsScreen> {
   }
 
   Widget _buildEmptyState() {
+    String message;
+    switch (_tabIndex) {
+      case 0: message = "You have no active bookings."; break;
+      case 1: message = "You haven't completed any bookings yet."; break;
+      case 2: message = "No cancelled bookings found."; break;
+      default: message = "No bookings found.";
+    }
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.background,
+              color: Colors.white,
             ),
             child: Icon(Icons.confirmation_number_outlined, size: 48, color: AppColors.textSecondary.withOpacity(0.5)),
           ),
@@ -134,20 +181,40 @@ class _BookingsScreenState extends State<BookingsScreen> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.secondary),
           ),
           const SizedBox(height: 8),
-          const Text(
-            "You haven't made any reservations yet.",
-            style: TextStyle(color: AppColors.textSecondary),
+          Text(
+            message,
+            style: const TextStyle(color: AppColors.textSecondary),
           ),
-          if (_tabIndex == 0) ...[
+          
+          // Show "Find Parking" only for Current/Active tab
+          ...[
             const SizedBox(height: 32),
-            SizedBox(
-              width: 200,
-              child: AppButton(
-                text: "Find Parking",
-                type: ButtonType.outline,
-                onPressed: () {
-                  // Navigation logic
-                },
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 16,
+                children: [
+                  SizedBox(
+                    width: 140,
+                    child: AppButton(
+                      text: "Find Parking",
+                      type: ButtonType.outline,
+                      onPressed: () {
+                        ref.watch(bottomNavIndexProvider.notifier).state = 0;
+                      },
+                    ),
+                  ),
+                  SizedBox(
+                    width: 140,
+                    child: AppButton(
+                      text: "Refresh",
+                      icon: Icons.refresh,
+                      type: ButtonType.secondary,
+                      onPressed: () => ref.refresh(myBookingsProvider),
+                    ),
+                  ),
+                ],
               ),
             )
           ]
@@ -180,9 +247,11 @@ class _TabButton extends StatelessWidget {
           label,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 13,
+            fontSize: 12, // Slightly smaller font to fit 3 items
             color: isSelected ? Colors.white : AppColors.textSecondary,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );

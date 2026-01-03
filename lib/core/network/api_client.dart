@@ -4,8 +4,9 @@ class ApiClient {
   final Dio _dio;
 
   ApiClient({
-    // String baseUrl = 'http://10.0.2.2:3000/api/',
-    String baseUrl = 'http://10.0.0.156:3000/api/',
+    String baseUrl = 'http://10.0.2.2:3000/api/',
+    // String baseUrl = 'http://192.168.1.2:3000/api/',
+    // String baseUrl = 'http://10.0.0.70:3000/api/',
     List<Interceptor>? interceptors,
     Duration connectTimeout = const Duration(seconds: 10),
     Duration receiveTimeout = const Duration(seconds: 10),

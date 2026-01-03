@@ -141,13 +141,7 @@ class RegionPlacesScreen extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (_) => PlaceDetailsScreen(
-          place: Place(
-            id: DateTime.now().millisecondsSinceEpoch,
-            name: placeData['name'] ?? '',
-            region: region,
-            pricePerHour: double.parse(placeData['price'] ?? ''),
-            minDurationMinutes: int.parse(placeData['min'] ?? ''),
-          ),
+          placeId: int.parse(placeData['id'] ?? '0'),
         ),
       ),
     );

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/config/app_colors.dart';
-import '../../../../core/widgets/ui/app_button.dart';
 import '../../../../core/widgets/ui/app_card.dart';
 import '../../../../core/widgets/ui/app_tile.dart';
 import '../../../auth/application/auth_controller.dart';
@@ -20,7 +20,6 @@ class ProfileScreen extends ConsumerWidget {
     final email = user?.email ?? "guest@vira.com";
     final words = name.isNotEmpty ? name.split(' ') : <String>[];
     final initials = words.map((word) => word.isNotEmpty ? word.substring(0, 1).toUpperCase() : '').join('');
-    final userId = user?.id.toString().padLeft(4, '0') ?? "0000";
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -95,7 +94,7 @@ class ProfileScreen extends ConsumerWidget {
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                       color: AppColors.primary,
                                       child: Text(
-                                        email,
+                                        "ACTIVE",
                                         style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
@@ -106,15 +105,6 @@ class ProfileScreen extends ConsumerWidget {
                                   ],
                                 ),
                               )
-                            ],
-                          ),
-                          const SizedBox(height: 32),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _IdentityField(label: "USER ID", value: userId),
-                              _IdentityField(label: "STATUS", value: "ACTIVE"),
-                              _IdentityField(label: "JOINED", value: "DEC 2025"),
                             ],
                           ),
                         ],
@@ -187,16 +177,16 @@ class ProfileScreen extends ConsumerWidget {
                   AppTile(
                     icon: Icons.phone_outlined,
                     label: "Phone Number",
-                    subLabel: "+20 100 000 0000",
+                    subLabel: "ـــــــــــــــــــــــــــ",
                     showChevron: false,
                     onTap: () {},
                   ),
                   AppTile(
-                    icon: Icons.directions_car_outlined,
-                    label: "Vehicle Details",
-                    subLabel: "Toyota Corolla • ABC 123",
+                    icon: Icons.person_outline_outlined,
+                    label: "Joined At",
+                    subLabel: user?.joinedAt != null ? DateFormat('dd MMM yyyy, hh:mm a').format(user!.joinedAt.toLocal()) : null,
                     onTap: () {},
-                  ),
+                  )
                 ],
               ),
 
@@ -244,40 +234,6 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _IdentityField extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _IdentityField({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: Colors.white.withOpacity(0.5),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.0,
-          ),
-        ),
-      ],
     );
   }
 }

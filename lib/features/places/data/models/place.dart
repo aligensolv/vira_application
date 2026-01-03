@@ -6,9 +6,7 @@ class Place {
   final Region? region;
   final double pricePerHour;
   final int minDurationMinutes;
-  final bool isActive;
   final String? description; // Optional for details
-  final List<String> amenities;
 
   Place({
     required this.id,
@@ -16,9 +14,7 @@ class Place {
     this.region,
     required this.pricePerHour,
     required this.minDurationMinutes,
-    this.isActive = true,
     this.description,
-    this.amenities = const ["Free Wifi", "Coffee", "Power Outlet", "Whiteboard"],
   });
 
   // Factory for API (Placeholder)
@@ -28,8 +24,7 @@ class Place {
       name: json['name'],
       region: json['region'] != null ? Region.fromJson(json['region']) : null,
       pricePerHour: double.parse(json['price_per_hour'].toString()),
-      minDurationMinutes: json['min_duration_min'],
-      isActive: json['is_active'] ?? true,
+      minDurationMinutes: json['min_duration_minutes'],
     );
   }
 }
