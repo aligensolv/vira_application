@@ -29,4 +29,45 @@ class AuthRemoteDataSource {
       rethrow;
     }
   }
+
+  Future<void> forgotPassword(String email) async {
+    try {
+      await _client.post('/auth/forgot-password', data: {'email': email});
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> verifyOtp(String email, String otp) async {
+    try {
+      await _client.post('/auth/verify-otp', data: {'email': email, 'otp': otp});
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      await _client.post('/auth/reset-password', data: {
+        'email': email,
+        'otp': otp,
+        'password': newPassword,
+        'password_confirmation': newPassword,
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> resendOtp(String email) async {
+    try {
+      await _client.post('/auth/resend-otp', data: {'email': email});
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

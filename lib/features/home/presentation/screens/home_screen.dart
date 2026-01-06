@@ -6,6 +6,7 @@ import 'package:vira/features/places/application/place_provider.dart';
 import 'package:vira/features/places/application/places_realtime_provider.dart';
 import 'package:vira/features/places/presentation/screens/place_details_screen.dart';
 import 'package:vira/features/region/application/region_provider.dart';
+import 'package:vira/features/region/presentation/screens/region_places_screen.dart';
 import '../../../../core/config/app_colors.dart';
 import '../widgets/place_card.dart';
 
@@ -173,12 +174,12 @@ class HomeScreen extends ConsumerWidget {
                           final region = regions[index];
                           return GestureDetector(
                             onTap: () {
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (_) => RegionPlacesScreen(region: region),
-                              //   ),
-                              // );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => RegionPlacesScreen(region: region),
+                                ),
+                              );
                             },
                             child: _ZoneTile(
                               name: region.name,

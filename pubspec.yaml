@@ -44,6 +44,7 @@ dependencies:
   shared_preferences:
   auto_size_text:
   socket_io_client: ^3.1.3
+  flutter_stripe: ^12.1.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:vira/core/realtime/socket.dart';
 import 'package:vira/core/services/cache_service.dart';
 import 'package:vira/features/intro/presentation/screens/splash_screen.dart';
@@ -10,6 +11,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await CacheService.init();
   await SocketManager.initialize();
+
+  Stripe.publishableKey = "pk_test_51N3EcJHHXVdH5ff2jGAGw29e2WcAlleHgFOwEQPm2jQARp6qIUiLBcspeDK4uUzYe2OYmq1tGXFipk630A8nVGgK00pLHqNjp3"; // Get this from Stripe Dashboard
+  Stripe.merchantIdentifier = 'merchant.com.vira';
+  await Stripe.instance.applySettings();
   
   runApp(
     ProviderScope(

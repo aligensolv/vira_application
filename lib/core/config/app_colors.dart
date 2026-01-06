@@ -13,11 +13,11 @@ class AppColors {
   static const Color warning = Color(0xFFF59E0B); // Amber
 
   // Neutral Colors
-  static const Color background = Color(0xFFF9F9F9);
+  static const Color background = Color(0xFFF9FAFB);
   static const Color surface = Color.fromARGB(255, 255, 255, 255);
   static const Color textPrimary = Color(0xFF2E2D2D);
   static const Color textSecondary = Color(0xFF6B7280);
-  static const Color border = Color.fromARGB(255, 233, 234, 237);
+  static const Color border = Color.fromARGB(255, 231, 231, 232);
   // static const Color border = Color(0x33353535);
 
 

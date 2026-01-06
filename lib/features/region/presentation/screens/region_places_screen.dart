@@ -1,148 +1,143 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vira/features/home/presentation/widgets/place_card.dart';
+import 'package:vira/features/places/application/place_provider.dart';
 import 'package:vira/features/places/data/models/place.dart';
 import 'package:vira/features/places/presentation/screens/place_details_screen.dart';
 import 'package:vira/features/region/data/models/region.dart';
 import '../../../../core/config/app_colors.dart';
 import '../../../../core/widgets/ui/app_input.dart';
 
-
-class RegionPlacesScreen extends StatelessWidget {
+class RegionPlacesScreen extends ConsumerWidget {
   final Region region;
 
   const RegionPlacesScreen({super.key, required this.region});
 
   @override
-  Widget build(BuildContext context) {
-    // Mock Data based on the passed Region
-    final places = List.generate(8, (index) => {
-      "name": "${region.name} Spot ${String.fromCharCode(65+index)}-${index + 10}",
-      "price": (12 + index * 1.5).toStringAsFixed(0),
-      "min": "60",
-    });
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 1. Watch the API Data based on Region ID
+    final placesAsync = ref.watch(placesByRegionProvider(region.id));
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // 1. App Bar
-            SliverAppBar(
-              backgroundColor: Colors.white,
-              surfaceTintColor: Colors.white,
-              pinned: true,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.secondary),
-                onPressed: () => Navigator.pop(context),
-              ),
-              title: Text(
-                "ZONE: ${region.name.toUpperCase()}",
-                style: const TextStyle(
-                  color: AppColors.secondary,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                  letterSpacing: 1.0,
-                ),
-              ),
-              centerTitle: true,
+      body: CustomScrollView(
+        slivers: [
+          // 1. App Bar
+          SliverAppBar(
+            surfaceTintColor: Colors.white,
+            pinned: true,
+            title: Text(
+              region.name,
             ),
-
-            // 2. Search / Filter Header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
+          ),
+      
+          // 2. Search Header (Full Width)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: AppInput(
+                hintText: "Search in ${region.name}...",
+                prefixIcon: Icons.search,
+                onChanged: (val) {
+                  // Implement local filtering logic here if needed
+                },
+              ),
+            ),
+          ),
+      
+          // 3. Async List Content
+          placesAsync.when(
+            // --- LOADING STATE ---
+            loading: () => const SliverFillRemaining(
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.secondary),
+              ),
+            ),
+            
+            // --- ERROR STATE ---
+            error: (err, stack) => SliverFillRemaining(
+              child: Center(
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AppInput(
-                            hintText: "Search in ${region.name}...",
-                            prefixIcon: Icons.search,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          height: 52,
-                          width: 52,
-                          decoration: const BoxDecoration(
-                            color: AppColors.secondary,
-                          ),
-                          child: const Icon(Icons.tune, color: Colors.white),
-                        )
-                      ],
+                    const Icon(Icons.error_outline, size: 48, color: AppColors.destructive),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Failed to load spots",
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "${places.length} SPOTS FOUND",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textSecondary,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                        const Row(
-                          children: [
-                            Icon(Icons.sort, size: 16, color: AppColors.textSecondary),
-                            SizedBox(width: 4),
-                            Text(
-                              "Price: Low to High",
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                    TextButton(
+                      onPressed: () => ref.refresh(placesByRegionProvider(region.id)),
+                      child: const Text("Retry", style: TextStyle(color: AppColors.primary)),
+                    )
                   ],
                 ),
               ),
             ),
-
-            // 3. Vertical Places List
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              sliver: SliverList.separated(
-                itemCount: places.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (context, index) {
-                  // final placeData = places[index];
-                  // return PlaceCard(
-                  //   // Pass null width to make it expand to screen width
-                  //   // width: null, 
-                  //   region: "z",
-                  //   name: placeData['name'] ?? '',
-                  //   price: placeData['price'] ?? '',
-                  //   minDuration: placeData['min'] ?? '',
-                  //   onTap: () => _navigateToDetails(context, placeData),
-                  // );
-
-                  return Container();
-                },
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 40)),
-          ],
-        ),
+      
+            // --- DATA STATE ---
+            data: (places) {
+              if (places.isEmpty) {
+                return const SliverFillRemaining(
+                  child: Center(
+                    child: Text(
+                      "No spots found in this zone.",
+                      style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                );
+              }
+      
+              // Using a SliverList to render the count header + items
+              return SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      // Header: Spots Found Count (Index 0)
+                      if (index == 0) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: Text(
+                            "${places.length} SPOTS FOUND",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textSecondary,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        );
+                      }
+      
+                      // Items (Index 1 to N)
+                      final place = places[index - 1]; // Offset index by 1
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: PlaceCard(
+                          place: place,
+                          onTap: () => _navigateToDetails(context, place),
+                        ),
+                      );
+                    },
+                    childCount: places.length + 1, // +1 for the header
+                  ),
+                ),
+              );
+            },
+          ),
+      
+          const SliverToBoxAdapter(child: SizedBox(height: 40)),
+        ],
       ),
     );
   }
 
-  void _navigateToDetails(BuildContext context, Map<String, String> placeData) {
+  void _navigateToDetails(BuildContext context, Place place) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PlaceDetailsScreen(
-          placeId: int.parse(placeData['id'] ?? '0'),
-        ),
+        builder: (_) => PlaceDetailsScreen(placeId: place.id,),
       ),
     );
   }

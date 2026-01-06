@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vira/features/booking/application/booking_provider.dart';
+import 'package:vira/features/booking/application/booking_realtime_provider.dart';
 import 'package:vira/features/booking/data/models/booking.dart';
 import 'package:vira/features/booking/presentation/screens/booking_details_screen.dart';
 import 'package:vira/features/layout/application/layout_provider.dart';
@@ -22,8 +23,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   @override
   Widget build(BuildContext context) {
     final bookingsAsync = ref.watch(myBookingsProvider);
-
-    
+    ref.watch(bookingRealtimeProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,

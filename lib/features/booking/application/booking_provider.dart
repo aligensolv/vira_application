@@ -46,6 +46,15 @@ class MyBookingsNotifier extends AsyncNotifier<List<Booking>> {
       (list) => list.where((b) => b.id != bookingId).toList(),
     );
   }
+
+  void updateStatus(int bookingId, BookingStatus status) {
+    state = state.whenData((list) {
+      final index = list.indexWhere((b) => b.id == bookingId);
+      final updated = [...list];
+      updated[index] = updated[index].copyWith(status: status);
+      return updated;
+    });
+  }
 }
 
 final selectedBookingProvider = Provider<Booking?>((ref) => null);

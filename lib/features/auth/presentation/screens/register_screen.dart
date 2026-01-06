@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:vira/core/extensions/context_extenstions.dart';
+import 'package:vira/core/extensions/sizedbox.dart';
 import 'package:vira/features/auth/application/auth_providers.dart';
 import 'package:vira/features/layout/presentation/main_layout_screen.dart';
 import '../../../../core/config/app_colors.dart';
@@ -14,21 +16,22 @@ class RegisterScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
-  // Controllers
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  // State
-  bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _isConfirmVisible = false;
 
   void _handleRegister() async {
-    // ... Basic Validation (Empty check, password match) same as before ...
+    if (_passwordController.text != _confirmController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Passwords do not match"), backgroundColor: AppColors.destructive),
+      );
+      return;
+    }
 
-    // Call Provider
     await ref.read(authControllerProvider.notifier).register(
       _nameController.text.trim(),
       _emailController.text.trim(),
@@ -38,7 +41,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final authState = ref.read(authControllerProvider);
 
     if (authState.hasValue && authState.value != null && mounted) {
-      // Success - Go to Home directly or Login (Choice is yours, usually Home)
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const MainLayoutScreen()),
@@ -54,146 +56,148 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
   }
 
+  // Getter for convenience in validation check
+  TextEditingController get _confirmController => _confirmPasswordController;
+
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(authControllerProvider).isLoading;
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.secondary),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      // appBar: AppBar(
+      //   backgroundColor: AppColors.secondary,
+      //   elevation: 0,
+      //   leading: IconButton(
+      //     icon: const Icon(Icons.arrow_back),
+      //     onPressed: () => Navigator.pop(context),
+      //   ),
+      // ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 1. Logo / Brand
-                Center(
-                  child: Container(
-                    height: 60,
-                    width: 60,
-                    color: AppColors.secondary,
-                    alignment: Alignment.center,
-                    child: const Text(
-                      "V",
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              20.h,
+              // 1. HEADER
+              const Text(
+                "New\nAccount.",
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.secondary,
+                  height: 1.0,
+                  letterSpacing: -1.5,
                 ),
-                const SizedBox(height: 32),
-
-                // 2. Header
-                const Text(
-                  "Create Account",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.secondary,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Join Vira and start booking spaces",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-
-                const SizedBox(height: 40),
-
-                // 3. Form Fields
-                AppInput(
-                  hintText: "Full Name",
-                  prefixIcon: Icons.person_outline,
-                  controller: _nameController,
-                ),
-                const SizedBox(height: 16),
-                
-                AppInput(
-                  hintText: "Email Address",
-                  prefixIcon: Icons.email_outlined,
-                  controller: _emailController,
-                ),
-                const SizedBox(height: 16),
-                
-                AppInput(
-                  hintText: "Password",
-                  prefixIcon: Icons.lock_outline,
-                  controller: _passwordController,
-                  // Toggle Visibility Logic
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isPasswordVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(width: 24, height: 2, color: AppColors.primary),
+                  const SizedBox(width: 12),
+                  const Text(
+                    "Join Vira for seamless booking.",
+                    style: TextStyle(
+                      fontSize: 16,
                       color: AppColors.textSecondary,
-                      size: 20,
+                      fontWeight: FontWeight.w500,
                     ),
-                    onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                   ),
-                ),
-                const SizedBox(height: 16),
-                
-                AppInput(
-                  hintText: "Confirm Password",
-                  prefixIcon: Icons.lock_outline,
-                  controller: _confirmPasswordController,
-                   // Toggle Visibility Logic
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isConfirmVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                      color: AppColors.textSecondary,
-                      size: 20,
-                    ),
-                    onPressed: () => setState(() => _isConfirmVisible = !_isConfirmVisible),
+                ],
+              ),
+
+              const SizedBox(height: 40),
+
+              // 2. INPUTS
+              AppInput(
+                hintText: "Full Name",
+                prefixIcon: Icons.person_outline,
+                controller: _nameController,
+              ),
+              const SizedBox(height: 16),
+              AppInput(
+                hintText: "Email Address",
+                prefixIcon: Icons.alternate_email,
+                controller: _emailController,
+              ),
+              const SizedBox(height: 16),
+              AppInput(
+                hintText: "Password",
+                prefixIcon: Icons.lock_outline,
+                controller: _passwordController,
+                obscureText: !_isPasswordVisible,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isPasswordVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    color: AppColors.textSecondary,
+                    size: 20,
                   ),
+                  onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                 ),
-
-                const SizedBox(height: 32),
-
-                // 4. Action Button
-                AppButton(
-                  text: "Sign Up",
-                  type: ButtonType.primary,
-                  isLoading: _isLoading,
-                  onPressed: _handleRegister,
+              ),
+              const SizedBox(height: 16),
+              AppInput(
+                hintText: "Confirm Password",
+                prefixIcon: Icons.lock_reset,
+                controller: _confirmPasswordController,
+                obscureText: !_isConfirmVisible,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isConfirmVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    color: AppColors.textSecondary,
+                    size: 20,
+                  ),
+                  onPressed: () => setState(() => _isConfirmVisible = !_isConfirmVisible),
                 ),
+              ),
 
-                const SizedBox(height: 24),
+              const SizedBox(height: 40),
 
-                // 5. Back to Login Link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              // 3. ACTIONS
+              AppButton(
+                text: "GET STARTED",
+                type: ButtonType.primary,
+                isLoading: isLoading,
+                onPressed: _handleRegister,
+              ),
+
+              const SizedBox(height: 32),
+
+  
+
+              Center(
+                child: Column(
                   children: [
                     const Text(
                       "Already have an account?",
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        "Sign In",
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        context.pop();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        decoration: const BoxDecoration(
+                          border: Border(bottom: BorderSide(color: AppColors.primary, width: 2)),
+                        ),
+                        child: const Text(
+                          "SIGN IN",
+                          style: TextStyle(
+                            color: AppColors.secondary,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                
-                // Bottom Padding
-                const SizedBox(height: 20),
-              ],
-            ),
+              ),
+              const SizedBox(height: 40),
+            ],
           ),
         ),
       ),

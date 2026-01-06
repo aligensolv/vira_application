@@ -95,6 +95,44 @@ class Booking {
         createdAt: DateTime.parse(json['created_at'] as String),
         updatedAt: DateTime.parse(json['updated_at'] as String),
       );
+
+  Booking copyWith({
+    int? id,
+    int? userId,
+    int? placeId,
+    DateTime? startTime,
+    DateTime? endTime,
+    int? requestedDurationMinutes,
+    int? actualDurationMinutes,
+    double? pricePerHour,
+    double? totalPrice,
+    BookingStatus? status,
+    Payment? payment,
+    List<BookingExtension>? extensions,
+    Place? place,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return Booking(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      placeId: placeId ?? this.placeId,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      requestedDurationMinutes:
+          requestedDurationMinutes ?? this.requestedDurationMinutes,
+      actualDurationMinutes:
+          actualDurationMinutes ?? this.actualDurationMinutes,
+      pricePerHour: pricePerHour ?? this.pricePerHour,
+      totalPrice: totalPrice ?? this.totalPrice,
+      status: status ?? this.status,
+      payment: payment ?? this.payment,
+      extensions: extensions ?? this.extensions,
+      place: place ?? this.place,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }
 
 

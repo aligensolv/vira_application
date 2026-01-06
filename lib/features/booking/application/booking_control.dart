@@ -19,7 +19,7 @@ class BookingDraftState {
   });
 
   double get estimatedPrice {
-    final hours = (durationMinutes / 60).ceil();
+    final hours = durationMinutes / 60;
     return hours * pricePerHour;
   }
 
@@ -105,7 +105,7 @@ class BookingController extends StateNotifier<BookingDraftState> {
 }
 
 // --- PROVIDER ---
-final bookingControllerProvider = StateNotifierProvider.autoDispose
+final bookingControllerProvider = StateNotifierProvider
     .family<BookingController, BookingDraftState, Place>((ref, place) {
   
   // Inject Repository instead of ApiClient

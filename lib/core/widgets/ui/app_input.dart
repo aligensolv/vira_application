@@ -9,6 +9,7 @@ class AppInput extends StatelessWidget {
   final Function(String)? onChanged;
   final VoidCallback? onTap;
   final bool readOnly;
+  final bool? obscureText;
 
   const AppInput({
     super.key,
@@ -19,6 +20,7 @@ class AppInput extends StatelessWidget {
     this.onChanged,
     this.onTap,
     this.readOnly = false,
+    this.obscureText = false
   });
 
   @override
@@ -28,6 +30,7 @@ class AppInput extends StatelessWidget {
       onChanged: onChanged,
       onTap: onTap,
       readOnly: readOnly,
+      obscureText: obscureText ?? false,
       style: const TextStyle(
         color: AppColors.textPrimary,
         fontWeight: FontWeight.w500,

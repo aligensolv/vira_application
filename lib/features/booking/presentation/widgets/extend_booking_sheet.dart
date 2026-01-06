@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vira/features/booking/application/booking_provider.dart';
 import 'package:vira/features/booking/data/models/booking.dart';
+import 'package:vira/shared/providers/payment_provider.dart';
 import '../../../../core/config/app_colors.dart';
 import '../../../../core/widgets/ui/app_button.dart';
 
@@ -30,42 +31,41 @@ class _ExtendBookingSheetState extends ConsumerState<ExtendBookingSheet> {
   double get _additionalCost {
     // Business Rule: Cost = ceil(hours) * rate
     // We treat the extension as a new block for simplicity in calculation
-    final hours = (_additionalMinutes / 60).ceil();
+    final hours = _additionalMinutes / 60;
     return hours * widget.booking.place.pricePerHour;
   }
 
   Future<void> _submitExtension() async {
-    if (_additionalMinutes <= 0) return;
+  if (_additionalMinutes <= 0) return;
 
-    setState(() => _isLoading = true);
-    try {
-      final repo = ref.read(bookingRepositoryProvider);
-      
-      // Simulate API Delay & Payment
-      await Future.delayed(const Duration(seconds: 1));
-      await repo.extendBooking(widget.booking.id, _additionalMinutes);
-
-      if (mounted) {
-        Navigator.pop(context); // Close sheet
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Booking Extended Successfully!"),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        // Trigger refresh of bookings list/details
-        ref.refresh(myBookingsProvider);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed: $e"), backgroundColor: AppColors.destructive),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+  setState(() => _isLoading = true);
+  try {
+    // 1. Initialize Stripe
+    final stripeService = ref.read(stripePaymentServiceProvider);
+    
+    // 2. Process Payment
+    // final isPaid = await stripeService.makePayment(_additionalCost, 'usd');
+    final isPaid = await stripeService.payWithCard(_additionalCost, 'usd');
+    if (!isPaid) {
+      setState(() => _isLoading = false);
+      return;
     }
+
+    // 3. Call Extend API (After Payment)
+    final repo = ref.read(bookingRepositoryProvider);
+    await repo.extendBooking(widget.booking.id, _additionalMinutes);
+
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Extended Successfully"), backgroundColor: AppColors.success));
+      ref.refresh(myBookingsProvider);
+    }
+  } catch (e) {
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: AppColors.destructive));
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
   }
+}
 
   @override
   Widget build(BuildContext context) {

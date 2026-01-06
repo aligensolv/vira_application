@@ -44,4 +44,24 @@ class AuthRepository {
     await CacheService.remove(_userKey);
     await CacheService.remove(_tokenKey);
   }
+
+  Future<void> forgotPassword(String email) async {
+    await _remoteDataSource.forgotPassword(email);
+  }
+
+  Future<void> verifyOtp(String email, String otp) async {
+    await _remoteDataSource.verifyOtp(email, otp);
+  }
+
+  Future<void> resetPassword(String email, String otp, String newPassword) async {
+    await _remoteDataSource.resetPassword(
+      email: email, 
+      otp: otp, 
+      newPassword: newPassword
+    );
+  }
+
+  Future<void> resendOtp(String email) async {
+    await _remoteDataSource.resendOtp(email);
+  }
 }
